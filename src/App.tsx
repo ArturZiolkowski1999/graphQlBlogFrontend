@@ -1,6 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery, gql, useLazyQuery } from '@apollo/client';
+import Post from './components/post';
+import PostForm from './components/postForm';
 
 const GET_POSTS = gql`
 
@@ -15,21 +17,32 @@ const GET_POSTS = gql`
 `;
 
 function App() {
-  const { error, loading, data } = useQuery(GET_POSTS);
+  const [getPosts, { error, loading, data }] = useLazyQuery(GET_POSTS);
+  const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    console.log(loading, error, data);
-  })
+    getPosts();
+  }, [getPosts]);
+
+  useEffect(() => {
+    if (data) {
+      setPosts(data.getPosts);
+    }
+
+  }, [data]);
+
+  const handlePostAdded = (newPost: never) => {
+    setPosts((prevPosts: never[]) => [...prevPosts, newPost]); // Dodanie nowego postu do danych
+    console.log("pobieram")
+  };
 
   return (
     <div className="App">
+      <PostForm onPostAdded={handlePostAdded}/>
       {data ? data.getPosts.map((post: any) => {
         return (
-        <div>
-          <p>{post.id}</p> 
-          <p>{post.author}</p>
-          <p>{post.body}</p>
-        </div>)
+          <Post id={post.id} author={post.author} body={post.body}/>
+        )
       }): null }
     </div>
   );
